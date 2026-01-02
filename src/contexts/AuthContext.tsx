@@ -2,11 +2,21 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 
+export type UserType = 'entrepreneur' | 'client';
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  signUp: (email: string, password: string, fullName: string, businessName: string) => Promise<{ error: any }>;
+  signUp: (
+    email: string,
+    password: string,
+    fullName: string,
+    businessName: string,
+    phone: string,
+    userType: UserType,
+    language: 'es' | 'en'
+  ) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
 }
@@ -36,7 +46,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signUp = async (email: string, password: string, fullName: string, businessName: string) => {
+  const signUp = async (
+    email: string,
+    password: string,
+    fullName: string,
+    businessName: string,
+    phone: string,
+    userType: UserType,
+    language: 'es' | 'en'
+  ) => {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -50,7 +68,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         email: data.user.email!,
         full_name: fullName,
         business_name: businessName,
-        booking_url: `${bookingUrl}-${Math.random().toString(36).substring(7)}`,
+        phone,
+        phone_verified: true,
+        user_type: userType,
+        preferred_language: language,
+        booking_url: userType === 'entrepreneur'
+          ? `${bookingUrl}-${Math.random().toString(36).substring(7)}`
+          : null,
       });
     }
 
